@@ -8,6 +8,7 @@ import poses_and_intrins
 import numpy as np
 from read_write_model import read_points3D_binary
 from termcolor import colored
+import warnings
 
 
 def parse_video(inpath, outpath, images_path, fps):
@@ -121,7 +122,9 @@ if __name__=="__main__":
 
     results_path = f"{os.getcwd()}/6D_results/{video_name}"
 
-    print(colored(f"Recontruction contains {image_count_after}/{image_count} images.", 'blue'))
+    if image_count != image_count_after:
+        warnings.warn(f"Recontruction contains {image_count_after}/{image_count} images.", category=UserWarning)
+
     print(colored("RUN COMMANDS IN ONEPOSE ENV:", "light_magenta"))
     print(f'python run.py +preprocess=sfm_spp_spg_own.yaml dataset.data_dir="{onePose_input_parent} {video_name}" dataset.outputs_dir={model_output_path} && ')
     print(f'python inference.py +experiment=test_own.yaml input.data_dirs={onePose_input} input.sfm_model_dirs={model_output_path} output.vis_dir={results_path}/vis output.eval_dir={results_path}/eval demo_root={results_path}/demo')
