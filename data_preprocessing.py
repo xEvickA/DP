@@ -9,7 +9,7 @@ import numpy as np
 from read_write_model import read_points3D_binary
 from termcolor import colored
 import warnings
-
+warnings.simplefilter("always") 
 
 def parse_video(inpath, outpath, images_path, fps):
     count = 0
@@ -32,7 +32,6 @@ def parse_video(inpath, outpath, images_path, fps):
                 outpath = outpath[:-1] + str(folder)
                 os.makedirs(outpath)
                 folder += 1
-            image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
             cv2.imwrite( outpath + f'/{image_number}.png', image)     
             cv2.imwrite(images_path + f'/{image_number}.png', image)
             image_number += 1
@@ -110,6 +109,7 @@ if __name__=="__main__":
         key=lambda f: len(pycolmap.Reconstruction(os.path.join(sparse_path, f)).images)
     )
     model_path = f'{sparse_path}/model'
+    
     # incremental_mapping creates more models, save just the largest
     os.rename(f'{sparse_path}/{largest_model}', model_path)
 
@@ -125,7 +125,5 @@ if __name__=="__main__":
     if image_count != image_count_after:
         warnings.warn(f"Recontruction contains {image_count_after}/{image_count} images.", category=UserWarning)
 
-    print(colored("RUN COMMANDS IN ONEPOSE ENV:", "light_magenta"))
-    print(f'python run.py +preprocess=sfm_spp_spg_own.yaml dataset.data_dir="{onePose_input_parent} {video_name}" dataset.outputs_dir={model_output_path} && ')
-    print(f'python inference.py +experiment=test_own.yaml input.data_dirs={onePose_input} input.sfm_model_dirs={model_output_path} output.vis_dir={results_path}/vis output.eval_dir={results_path}/eval demo_root={results_path}/demo')
+    print(f'python run.py +preprocess=sfm_spp_spg_own.yaml dataset.data_dir="{onePose_input_parent} {video_name}" dataset.outputs_dir={model_output_path} && python inference.py +experiment=test_own.yaml input.data_dirs={onePose_input} input.sfm_model_dirs={model_output_path} output.vis_dir={results_path}/vis output.eval_dir={results_path}/eval demo_root={results_path}/demo +fps={fps}')
 
