@@ -1,6 +1,6 @@
   # ODHAD POLOHY OBJEKTOV SO 6 STUPŇAMI VOĽNOSTI S VYUŽITÍM RIEDKYCH 3D MODELOV RUKAMI DRŽANÝCH OBJEKTOV
 
-  Odhad 6D polohy je vykonávaný pomocou scriptu `run_estimation.sh`, ktorý najprv spustí `preprocessing.py` a následne spustí odhad 6D polohy pomocou modelu OnePose. 
+  Odhad 6D polohy je vykonávaný pomocou scriptu `run_estimation.sh`, ktorý najprv spustí `data_preprocessing.py` a následne spustí odhad 6D polohy pomocou modelu OnePose. 
 
   ## Inštalácia
 
