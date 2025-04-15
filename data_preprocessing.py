@@ -20,7 +20,7 @@ def parse_video(inpath, outpath, images_path, fps):
     success,image = vidcap.read()
     
     interval = int(vidcap.get(cv2.CAP_PROP_FPS) / fps) 
-    
+    dash_index = outpath.rindex("-") + 1
     while success:
         success, image = vidcap.read()
         if not success:
@@ -28,8 +28,8 @@ def parse_video(inpath, outpath, images_path, fps):
 
         if count % interval == 0:    
             # in case CUDA out of memory deacrease the number
-            if image_number % 18 == 0:
-                outpath = outpath[:-1] + str(folder)
+            if image_number % 5 == 0:
+                outpath = outpath[:dash_index] + str(folder)
                 os.makedirs(outpath)
                 folder += 1
             cv2.imwrite( outpath + f'/{image_number}.png', image)     
