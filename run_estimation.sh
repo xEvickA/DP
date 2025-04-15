@@ -3,7 +3,7 @@
 echo "Data preprocessing..."
 video=$1
 fps=${2:-2}
-cmd=$(conda run -n hoist python estimate_6Dpose.py --video_path $video --fps $fps)
+cmd=$(conda run -n hoist python data_preprocessing.py --video_path $video --fps $fps)
 
 cd OP/OnePose
 echo "OnePose is running..."
