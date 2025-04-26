@@ -1,5 +1,6 @@
 import cv2
 import os
+import sys
 import argparse
 import pycolmap
 from pycolmap import extract_features, match_exhaustive, match_sequential
@@ -155,8 +156,8 @@ if __name__=="__main__":
         copy_files(f'{onePose_input2}/color', f'{merged_folder}/color')
         merged_model_path = make_reconstruction(f'{video_name1}+{video_name2}', merged_folder, True)
         results_path = f"{os.getcwd()}/6D_results/{video_name2}"
-        print(f'python run.py +preprocess=sfm_spp_spg_own.yaml dataset.data_dir="{onePose_input_parent1} {get_video_name(video1)}" dataset.outputs_dir={model_output_path} && python inference.py +experiment=test_own.yaml input.data_dirs={onePose_input2} input.sfm_model_dirs={model_output_path} output.vis_dir={results_path}/vis output.eval_dir={results_path}/eval demo_root={results_path}/demo +fps={fps}')
+        print(f'python run.py +preprocess=sfm_spp_spg_own.yaml dataset.data_dir="{onePose_input_parent1} {get_video_name(video1)}" dataset.outputs_dir={model_output_path} && python inference.py +experiment=test_own.yaml input.data_dirs={onePose_input2} input.sfm_model_dirs={model_output_path} output.vis_dir={results_path}/vis output.eval_dir={results_path}/eval demo_root={results_path}/demo +fps={fps}', flush=True)
     
     else:
         results_path = f"{os.getcwd()}/6D_results/{video_name1}"
-        print(f'python run.py +preprocess=sfm_spp_spg_own.yaml dataset.data_dir="{onePose_input_parent1} {get_video_name(video1)}" dataset.outputs_dir={model_output_path} && python inference.py +experiment=test_own.yaml input.data_dirs={onePose_input1} input.sfm_model_dirs={model_output_path} output.vis_dir={results_path}/vis output.eval_dir={results_path}/eval demo_root={results_path}/demo +fps={fps}')
+        print(f'python run.py +preprocess=sfm_spp_spg_own.yaml dataset.data_dir="{onePose_input_parent1} {get_video_name(video1)}" dataset.outputs_dir={model_output_path} && python inference.py +experiment=test_own.yaml input.data_dirs={onePose_input1} input.sfm_model_dirs={model_output_path} output.vis_dir={results_path}/vis output.eval_dir={results_path}/eval demo_root={results_path}/demo +fps={fps}', flush=True)
