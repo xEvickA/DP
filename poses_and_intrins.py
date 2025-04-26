@@ -60,12 +60,20 @@ def create_poses_and_intrins(model_path, output_dir):
         intrin_txt = os.path.join(intrin_dir, f'{image_name}.txt')
         np.savetxt(intrin_txt, K)
     num_images = len(images.items())
-    intrinsics_txt = os.path.join(output_dir, f'intrinsics.txt')
+    intrinsics_txt = os.path.join(output_dir, 'intrinsics.txt')
     with open(intrinsics_txt, 'w') as intrin_file:
         intrin_file.write(f'fx: {FX / num_images}\n')
         intrin_file.write(f'fy: {FY / num_images}\n')
         intrin_file.write(f'cx: {CX / num_images}\n')
         intrin_file.write(f'cy: {CY / num_images}\n')
+
+    k_txt = os.path.join(output_dir, 'k.txt')
+    K_global = np.array([
+        [FX / num_images, 0, CX / num_images],
+        [0, FY / num_images, CY / num_images],
+        [0, 0, 1]
+    ])
+    np.savetxt(k_txt, K_global)
 
 def add_pose_intrin(onePose_input_path):
     """
@@ -83,15 +91,14 @@ def add_pose_intrin(onePose_input_path):
     for i in imgs:
         if i not in poses:
             pose = np.loadtxt(f'{poses_path}/{last_pose}.txt')
-            # print(pose)
             np.savetxt(f'{poses_path}/{i}.txt', pose, fmt="%.8f")
+
             intrin = np.loadtxt(f'{intrins_path}/{last_pose}.txt')
-            # print(intrin)
             np.savetxt(f'{intrins_path}/{i}.txt', intrin, fmt="%.8f")
         else:
             last_pose = i
 
-def delete_images(onePose_input_path):
+def delete_images(onePose_input_path, merged=False):
     """
     Delete images which are not in recontruction
     """
@@ -104,7 +111,7 @@ def delete_images(onePose_input_path):
     poses = os.listdir(poses_path)
     poses = [int(pose.split('.')[0]) for pose in poses]
     for img in imgs:
-        # print(img)
         if img not in poses:
             os.remove(f'{masked_path}/{img}.png')
-            os.remove(f'{images_path}/{img}.png')
+            if not merged:
+                os.remove(f'{images_path}/{img}.png')

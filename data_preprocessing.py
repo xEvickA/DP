@@ -7,11 +7,10 @@ import shutil
 import poses_and_intrins
 import numpy as np
 from read_write_model import read_points3D_binary
-from termcolor import colored
 import warnings
 warnings.simplefilter("always") 
 
-def parse_video(inpath, outpath, images_path, fps):
+def parse_video(inpath, outpath, images_path, fps, img_count=0):
     count = 0
     image_number = 0
     folder = 0
@@ -32,11 +31,11 @@ def parse_video(inpath, outpath, images_path, fps):
                 outpath = outpath[:dash_index] + str(folder)
                 os.makedirs(outpath)
                 folder += 1
-            cv2.imwrite( outpath + f'/{image_number}.png', image)     
-            cv2.imwrite(images_path + f'/{image_number}.png', image)
+            cv2.imwrite( outpath + f'/{image_number + img_count}.png', image)     
+            cv2.imwrite(images_path + f'/{image_number + img_count}.png', image)
             image_number += 1
         count = count + 1
-    return folder - 1 
+    return image_number
 
 def apply_mask(images_path, masks_path, output_path):
     for image_path in os.listdir(images_path):
@@ -53,19 +52,11 @@ def create_object_center(points3D_path, output_path):
 
     np.savetxt(f'{output_path}/center.txt', mean_point)
 
+def get_video_name(video):
+    return video.split('/')[-1].split(".")[0]
 
-if __name__=="__main__":
-    fps = 1
-    argparser = argparse.ArgumentParser()
-    argparser.add_argument('--video_path', required=True)
-    argparser.add_argument('--fps', required=False)
-    arguments = argparser.parse_args()
-
-    video = arguments.video_path
-    video_name = video.split('/')[-1].split(".")[0]
-    if arguments.fps:
-        fps = int(arguments.fps)
-
+def preprocessing(video, img_count=0):
+    video_name = get_video_name(video)
     outpath = f'./parsed_videos/{video_name}/{video_name}-0' # /{video_name}-0
     if os.path.exists(outpath):
         shutil.rmtree(outpath[:outpath.rindex('/')])
@@ -76,8 +67,7 @@ if __name__=="__main__":
     images_path = f'{onePose_input}/color_full'
     os.makedirs(images_path)
     
-    folders_num = parse_video(video, outpath, images_path, fps)
-    image_count = len(os.listdir(images_path))
+    image_count = parse_video(video, outpath, images_path, fps, img_count)
 
     outpath = outpath[:outpath.rindex('/')][1:]
     os.system(f"cd HOISTFormer && CUDA_VISIBLE_DEVICES=0 python demo.py --video_frames_path {os.getcwd() + outpath}")
@@ -86,7 +76,9 @@ if __name__=="__main__":
     masked_images_path = f'{os.getcwd()}/6D_pose_data/{video_name}/{video_name}/color'
     os.makedirs(masked_images_path)
     apply_mask(images_path, masks_path, masked_images_path)
+    return onePose_input, image_count
 
+def make_reconstruction(video_name, onePose_input, merged=False):
     model_output_path = f"{os.getcwd()}/6D_pose_model/{video_name}"
     if os.path.exists(model_output_path):
         shutil.rmtree(model_output_path)
@@ -96,11 +88,11 @@ if __name__=="__main__":
     # create sparse model
     database_path = f'{sparse_path}/database.db'
     extract_features(database_path=database_path,
-                     image_path=masked_images_path)
+                     image_path=f'{onePose_input}/color')
     match_exhaustive(database_path)
     reconstruction = pycolmap.incremental_mapping(
         database_path=database_path,
-        image_path=masked_images_path,
+        image_path=f'{onePose_input}/color',
         output_path=sparse_path
     )
     model_folders = sorted(os.listdir(sparse_path))[:-1]
@@ -116,14 +108,55 @@ if __name__=="__main__":
     poses_and_intrins.create_poses_and_intrins(model_path, onePose_input)
 
     # delete images which wasn't used to create model
-    poses_and_intrins.delete_images(onePose_input)
-    image_count_after = len(os.listdir(images_path))
+    poses_and_intrins.delete_images(onePose_input, merged)
+    onePose_input_parent = onePose_input[:onePose_input.rindex('/')]
     create_object_center(model_path, onePose_input_parent)
+    return model_output_path
 
-    results_path = f"{os.getcwd()}/6D_results/{video_name}"
+def copy_files(source, destination):
+    os.makedirs(destination, exist_ok=True)
+    for filename in os.listdir(source):
+        source_path = os.path.join(source, filename)
+        destination_path = os.path.join(destination, filename)
 
-    if image_count != image_count_after:
-        warnings.warn(f"Recontruction contains {image_count_after}/{image_count} images.", category=UserWarning)
+        # Check if it's a file (not a subdirectory)
+        if os.path.isfile(source_path):
+            shutil.copy2(source_path, destination_path)
 
-    print(f'python run.py +preprocess=sfm_spp_spg_own.yaml dataset.data_dir="{onePose_input_parent} {video_name}" dataset.outputs_dir={model_output_path} && python inference.py +experiment=test_own.yaml input.data_dirs={onePose_input} input.sfm_model_dirs={model_output_path} output.vis_dir={results_path}/vis output.eval_dir={results_path}/eval demo_root={results_path}/demo +fps={fps}')
+if __name__=="__main__":
+    fps = 1
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument('--video_path1', required=True)
+    argparser.add_argument('--video_path2', required=False)
+    argparser.add_argument('--fps', required=False)
+    arguments = argparser.parse_args()
 
+    if arguments.fps:
+        fps = int(arguments.fps)
+
+    video1 = arguments.video_path1
+    video_name1 = get_video_name(video1)
+    onePose_input1, num_imgs = preprocessing(video1)
+    model_output_path = make_reconstruction(video_name1, onePose_input1)
+    onePose_input_parent1 = onePose_input1[:onePose_input1.rindex('/')]
+
+    if arguments.video_path2:
+        video2 = arguments.video_path2
+        video_name2 = get_video_name(video2)
+        onePose_input2, _ = preprocessing(video2, num_imgs)
+        onePose_input_parent2 = onePose_input2[:onePose_input2.rindex('/')]
+        copy_files(onePose_input1, onePose_input2)
+        copy_files(onePose_input_parent1, onePose_input_parent2)
+
+        merged_folder = f'{os.getcwd()}/6D_pose_data/{video_name1}+{video_name2}/{video_name1}+{video_name2}'
+        if os.path.exists(merged_folder):
+            shutil.rmtree(merged_folder)
+        copy_files(f'{onePose_input1}/color', f'{merged_folder}/color')
+        copy_files(f'{onePose_input2}/color', f'{merged_folder}/color')
+        merged_model_path = make_reconstruction(f'{video_name1}+{video_name2}', merged_folder, True)
+        results_path = f"{os.getcwd()}/6D_results/{video_name2}"
+        print(f'python run.py +preprocess=sfm_spp_spg_own.yaml dataset.data_dir="{onePose_input_parent1} {get_video_name(video1)}" dataset.outputs_dir={model_output_path} && python inference.py +experiment=test_own.yaml input.data_dirs={onePose_input2} input.sfm_model_dirs={model_output_path} output.vis_dir={results_path}/vis output.eval_dir={results_path}/eval demo_root={results_path}/demo +fps={fps}')
+    
+    else:
+        results_path = f"{os.getcwd()}/6D_results/{video_name1}"
+        print(f'python run.py +preprocess=sfm_spp_spg_own.yaml dataset.data_dir="{onePose_input_parent1} {get_video_name(video1)}" dataset.outputs_dir={model_output_path} && python inference.py +experiment=test_own.yaml input.data_dirs={onePose_input1} input.sfm_model_dirs={model_output_path} output.vis_dir={results_path}/vis output.eval_dir={results_path}/eval demo_root={results_path}/demo +fps={fps}')
