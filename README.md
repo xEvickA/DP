@@ -17,8 +17,8 @@
 ├── poses_and_intrins.py
 ├── read_write_model.py
 └── run_estimation.sh
-            
-    ```
+   ```      
+   
   ## Spustenie
 
   Script sa spúšťa cez príkazový riadok `./run_estimation.sh --video1=<cesta k .mp4 súboru, z ktorého je vytváraný 3D model> --video2=<cesta k .mp4 súboru, v ktorom je odhadovaný poloha objektu> --fps=<fps>`, pričom fps a video2 sú nepovinné argumenty, keď argument video2 nie je zadaný, odhad polohy sa vykoná na videu1. 
