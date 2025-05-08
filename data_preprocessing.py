@@ -146,15 +146,17 @@ if __name__=="__main__":
         video_name2 = get_video_name(video2)
         onePose_input2, _ = preprocessing(video2, num_imgs)
         onePose_input_parent2 = onePose_input2[:onePose_input2.rindex('/')]
-        copy_files(onePose_input1, onePose_input2)
-        copy_files(onePose_input_parent1, onePose_input_parent2)
 
-        merged_folder = f'{os.getcwd()}/6D_pose_data/{video_name1}+{video_name2}/{video_name1}+{video_name2}'
-        if os.path.exists(merged_folder):
-            shutil.rmtree(merged_folder)
-        copy_files(f'{onePose_input1}/color', f'{merged_folder}/color')
-        copy_files(f'{onePose_input2}/color', f'{merged_folder}/color')
-        merged_model_path = make_reconstruction(f'{video_name1}+{video_name2}', merged_folder, True)
+        # # Uncomment to create model to compare estimated and model poses # #
+        # copy_files(onePose_input1, onePose_input2)
+        # copy_files(onePose_input_parent1, onePose_input_parent2)
+
+        # merged_folder = f'{os.getcwd()}/6D_pose_data/{video_name1}+{video_name2}/{video_name1}+{video_name2}'
+        # if os.path.exists(merged_folder):
+        #     shutil.rmtree(merged_folder)
+        # copy_files(f'{onePose_input1}/color', f'{merged_folder}/color')
+        # copy_files(f'{onePose_input2}/color', f'{merged_folder}/color')
+        # merged_model_path = make_reconstruction(f'{video_name1}+{video_name2}', merged_folder, True)
         results_path = f"{os.getcwd()}/6D_results/{video_name2}_model_{video_name1}"
         print(f'python run.py +preprocess=sfm_spp_spg_own.yaml dataset.data_dir="{onePose_input_parent1} {get_video_name(video1)}" dataset.outputs_dir={model_output_path} && python inference.py +experiment=test_own.yaml input.data_dirs={onePose_input2} input.sfm_model_dirs={model_output_path} output.vis_dir={results_path}/vis output.eval_dir={results_path}/eval demo_root={results_path}/demo +fps={fps}', flush=True)
     
